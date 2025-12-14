@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy
+python-dotenv
+requests
+ccxt
+pydantic
+aiohttp

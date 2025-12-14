@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  fetcher:
+    build:
+      context: fetcher
+      dockerfile: Dockerfile
+    container_name: cmma-fetcher
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    restart: always
+
+  api:
+    build:
+      context: api
+      dockerfile: Dockerfile
+    container_name: cmma-api
+    depends_on:
+      - fetcher
+    volumes:
+      - ./data:/app/data:ro
+    restart: always
+
+  nginx:
+    build:
+      context: nginx
+      dockerfile: Dockerfile
+    container_name: cmma-nginx
+    depends_on:
+      - api
+    ports:
+      - "8001:80"
+    restart: always
