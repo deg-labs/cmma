@@ -81,3 +81,65 @@ def get_symbols_exceeding_threshold(db: Session, timeframe: str, price_threshold
         }
     )
     return result.fetchall()
+
+from datetime import datetime, timedelta
+
+def _parse_period_to_seconds(period_str: str) -> int:
+    """Parses a period string like '24h' or '7d' into seconds."""
+    unit = period_str[-1].lower()
+    value = int(period_str[:-1])
+
+    if unit == 'h':
+        return value * 3600
+    elif unit == 'd':
+        return value * 3600 * 24
+    elif unit == 'w':
+        return value * 3600 * 24 * 7
+    # Add more units if needed (e.g., 'min' for minutes, 's' for seconds)
+    raise ValueError(f"Unsupported period unit: {period_str}")
+
+def get_volume_for_period(db: Session, timeframe: str, period_str: str, sort: str, limit: int, min_volume: float = 0) -> List[Any]:
+    """
+    指定された期間とタイムフレームに基づいて、各銘柄の合計出来高を取得します。
+    """
+    table_name = f"ohlcv_{timeframe}"
+
+    # Convert period string to seconds, then to milliseconds for timestamp comparison
+    period_seconds = _parse_period_to_seconds(period_str)
+    end_ts = datetime.utcnow()
+    start_ts = end_ts - timedelta(seconds=period_seconds)
+    start_ts_ms = int(start_ts.timestamp() * 1000)
+
+    # Sort order mapping
+    sort_map = {
+        "volume_desc": "total_volume DESC",
+        "volume_asc": "total_volume ASC",
+        "symbol_asc": "symbol ASC",
+    }
+    order_by_clause = sort_map.get(sort, "total_volume DESC")
+
+    query = text(f"""
+        SELECT
+            symbol,
+            SUM(volume) as total_volume
+        FROM {table_name}
+        WHERE
+            timestamp >= :start_ts_ms
+        GROUP BY
+            symbol
+        HAVING
+            SUM(volume) > :min_volume
+        ORDER BY
+            {order_by_clause}
+        LIMIT :limit
+    """)
+
+    result = db.execute(
+        query,
+        {
+            "start_ts_ms": start_ts_ms,
+            "limit": limit,
+            "min_volume": min_volume
+        }
+    )
+    return result.fetchall()
