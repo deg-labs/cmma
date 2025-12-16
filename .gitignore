@@ -2,3 +2,4 @@ logs
 cache
 .env
 *.db
+*.db-journal
