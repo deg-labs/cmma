@@ -2,17 +2,21 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [cmma (crypto market metrics api))](#cmma-crypto-market-metrics-api)
+- [cmma (crypto market metrics api)](#cmma-crypto-market-metrics-api)
   - [機能](#%E6%A9%9F%E8%83%BD)
   - [必要要件](#%E5%BF%85%E8%A6%81%E8%A6%81%E4%BB%B6)
   - [実行方法](#%E5%AE%9F%E8%A1%8C%E6%96%B9%E6%B3%95)
   - [API利用方法](#api%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95)
     - [APIドキュメント (Swagger UI)](#api%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88-swagger-ui)
     - [エンドポイント: `GET /volatility`](#%E3%82%A8%E3%83%B3%E3%83%89%E3%83%9D%E3%82%A4%E3%83%B3%E3%83%88-get-volatility)
-    - [エンドポイント: `GET /volume`](#%E3%82%A8%E3%83%B3%E3%83%89%E3%83%9D%E3%82%A4%E3%83%B3%E3%83%88-get-volume)
       - [クエリパラメータ](#%E3%82%AF%E3%82%A8%E3%83%AA%E3%83%91%E3%83%A9%E3%83%A1%E3%83%BC%E3%82%BF)
       - [使用例 (curl)](#%E4%BD%BF%E7%94%A8%E4%BE%8B-curl)
       - [成功レスポンスの例](#%E6%88%90%E5%8A%9F%E3%83%AC%E3%82%B9%E3%83%9D%E3%83%B3%E3%82%B9%E3%81%AE%E4%BE%8B)
+    - [エンドポイント: `GET /volume`](#%E3%82%A8%E3%83%B3%E3%83%89%E3%83%9D%E3%82%A4%E3%83%B3%E3%83%88-get-volume)
+      - [クエリパラメータ](#%E3%82%AF%E3%82%A8%E3%83%AA%E3%83%91%E3%83%A9%E3%83%A1%E3%83%BC%E3%82%BF-1)
+      - [使用例 (curl)](#%E4%BD%BF%E7%94%A8%E4%BE%8B-curl-1)
+      - [成功レスポンスの例](#%E6%88%90%E5%8A%9F%E3%83%AC%E3%82%B9%E3%83%9D%E3%83%B3%E3%82%B9%E3%81%AE%E4%BE%8B-1)
+      - [注意事項](#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A0%85)
     - [エラーレスポンス](#%E3%82%A8%E3%83%A9%E3%83%BC%E3%83%AC%E3%82%B9%E3%83%9D%E3%83%B3%E3%82%B9)
   - [アプリケーションの停止](#%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E3%81%AE%E5%81%9C%E6%AD%A2)
   - [システム構成](#%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E6%A7%8B%E6%88%90)
