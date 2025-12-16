@@ -27,6 +27,10 @@ services:
       - fetcher
     volumes:
       - ./data:/app/data:ro
+    env_file:
+      - .env
+    environment:
+      - OHLCV_HISTORY_LIMIT=${OHLCV_HISTORY_LIMIT}
     restart: always
     logging:
       driver: json-file

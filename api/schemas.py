@@ -33,3 +33,18 @@ class ErrorDetail(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: ErrorDetail
+
+class VolumeData(BaseModel):
+    """出来高データ本体"""
+    symbol: str = Field(..., description="銘柄シンボル")
+    total_volume: float = Field(..., description="指定期間の合計出来高")
+    timeframe: str = Field(..., description="出来高の計算に用いたタイムフレーム")
+    period: str = Field(..., description="出来高の計算に用いた期間 (例: '24h')")
+
+    class Config:
+        from_attributes = True
+
+class VolumeResponse(BaseModel):
+    """出来高APIレスポンス全体"""
+    count: int = Field(..., description="返されたデータ件数")
+    data: List[VolumeData]
