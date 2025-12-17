@@ -98,7 +98,7 @@ def _parse_period_to_seconds(period_str: str) -> int:
     # Add more units if needed (e.g., 'min' for minutes, 's' for seconds)
     raise ValueError(f"Unsupported period unit: {period_str}")
 
-def get_volume_for_period(db: Session, timeframe: str, period_str: str, sort: str, limit: int, min_volume: float = 0) -> List[Any]:
+def get_volume_for_period(db: Session, timeframe: str, period_str: str, sort: str, limit: int, min_volume: float = 0, min_volume_target: str = "turnover") -> List[Any]:
     """
     指定された期間とタイムフレームに基づいて、各銘柄の合計出来高を取得します。
     """
@@ -114,9 +114,20 @@ def get_volume_for_period(db: Session, timeframe: str, period_str: str, sort: st
     sort_map = {
         "volume_desc": "total_volume DESC",
         "volume_asc": "total_volume ASC",
+        "turnover_desc": "total_turnover DESC",
+        "turnover_asc": "total_turnover ASC",
         "symbol_asc": "symbol ASC",
     }
     order_by_clause = sort_map.get(sort, "total_volume DESC")
+
+    # Having clause based on min_volume_target
+    having_clause = ""
+    if min_volume > 0:
+        if min_volume_target == "volume":
+            having_clause = "HAVING SUM(volume) > :min_volume"
+        else: # Default to turnover
+            having_clause = "HAVING SUM(turnover) > :min_volume"
+
 
     query = text(f"""
         SELECT
@@ -128,8 +139,7 @@ def get_volume_for_period(db: Session, timeframe: str, period_str: str, sort: st
             timestamp >= :start_ts_ms
         GROUP BY
             symbol
-        HAVING
-            SUM(volume) > :min_volume
+        {having_clause}
         ORDER BY
             {order_by_clause}
         LIMIT :limit

@@ -122,23 +122,17 @@ def read_root():
 # Default to 5 if not set, matching the original .env.example
 OHLCV_HISTORY_LIMIT = int(os.getenv("OHLCV_HISTORY_LIMIT", "5"))
 
-# --- パラメータ用Enum ---
-class Direction(str, Enum):
-    up = "up"
-    down = "down"
-    both = "both"
-
-class SortBy(str, Enum):
-    volatility_desc = "volatility_desc"
-    volatility_asc = "volatility_asc"
-    symbol_asc = "symbol_asc"
-
 class VolumeSortBy(str, Enum):
     volume_desc = "volume_desc"
     volume_asc = "volume_asc"
+    turnover_desc = "turnover_desc"
+    turnover_asc = "turnover_asc"
     symbol_asc = "symbol_asc"
 
-VALID_TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w", "1M"]
+class VolumeTarget(str, Enum):
+    volume = "volume"
+    turnover = "turnover"
+
 VALID_PERIODS = ["1h", "6h", "12h", "24h", "1d", "7d", "1w", "1M"] # Add more as needed, consistent with _parse_period_to_seconds
 
 # Helper function to convert timeframe string to minutes
@@ -173,59 +167,6 @@ def _parse_period_to_minutes(period_str: str) -> int:
         return value
     raise ValueError(f"Unsupported period unit: {period_str}")
 
-
-# --- エンドポイント ---
-@app.get(
-    "/volatility", 
-    response_model=schemas.VolatilityResponse,
-    summary="価格変動率の高い銘柄を取得",
-    response_description="条件に一致した銘柄の変動率データ"
-)
-def read_volatility(
-    timeframe: str = Query(..., description=f"タイムフレームを指定。有効値: {', '.join(VALID_TIMEFRAMES)}"),
-    price_threshold: float = Query(..., gt=0, description="価格変動率の閾値(%)。絶対値で比較されます。例: 5.0", alias="threshold"),
-    offset: int = Query(1, gt=0, description="何本前のローソク足と比較するか。デフォルトは1 (1本前)。"),
-    direction: Direction = Query(Direction.both, description="変動方向をフィルタ"),
-    sort: SortBy = Query(SortBy.volatility_desc, description="結果のソート順"),
-    limit: int = Query(100, gt=0, le=500, description="取得する最大件数"),
-    db: Session = Depends(get_db)
-):
-    if timeframe not in VALID_TIMEFRAMES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"無効なタイムフレームです。有効な値: {', '.join(VALID_TIMEFRAMES)}",
-            headers={"X-Error-Code": "INVALID_TIMEFRAME"},
-        )
-    
-    results = crud.get_symbols_exceeding_threshold(
-        db=db, 
-        timeframe=timeframe, 
-        price_threshold=price_threshold,
-        offset=offset,
-        direction=direction.value,
-        sort=sort.value,
-        limit=limit
-    )
-    
-    # crudからの結果をレスポンスモデルに変換
-    volatility_data = [
-        schemas.VolatilityData(
-            symbol=row.symbol,
-            timeframe=row.timeframe,
-            candle_ts=row.candle_ts,
-            price=schemas.PriceInfo(
-                close=row.close,
-                prev_close=row.prev_close
-            ),
-            change=schemas.ChangeInfo(
-                pct=round(row.volatility_pct, 4),
-                direction="up" if row.volatility_pct > 0 else "down"
-            )
-        ) for row in results
-    ]
-
-    return schemas.VolatilityResponse(count=len(volatility_data), data=volatility_data)
-
 @app.get(
     "/volume",
     response_model=schemas.VolumeResponse,
@@ -235,7 +176,8 @@ def read_volatility(
 def read_volume(
     timeframe: str = Query(..., description=f"出来高集計に使うOHLCVのタイムフレーム。有効値: {', '.join(VALID_TIMEFRAMES)}"),
     period: str = Query(..., description=f"出来高を集計する期間 (例: '24h', '7d')。有効値: {', '.join(VALID_PERIODS)}"),
-    min_volume: float = Query(None, gt=0, description="期間内の合計出来高での足切り(USD)。例: 500000000 (500M USD)"),
+    min_volume: float = Query(None, gt=0, description="期間内の合計出来高/売買代金での足切り。例: 500000000 (500M)。対象は`min_volume_target`で指定。"),
+    min_volume_target: VolumeTarget = Query(VolumeTarget.turnover, description="`min_volume`のフィルタ対象(出来高 or 売買代金)"),
     sort: VolumeSortBy = Query(VolumeSortBy.volume_desc, description="結果のソート順"),
     limit: int = Query(100, gt=0, le=500, description="取得する最大件数"),
     db: Session = Depends(get_db)
@@ -281,7 +223,8 @@ def read_volume(
         period_str=period,
         sort=sort.value,
         limit=limit,
-        min_volume=min_volume or 0
+        min_volume=min_volume or 0,
+        min_volume_target=min_volume_target.value,
     )
 
     volume_data = [

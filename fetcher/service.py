@@ -52,7 +52,7 @@ class DataFetchService:
                     if ohlcv_data:
                         for row in ohlcv_data:
                             records_to_upsert.append((
-                                symbol, row[0], row[1], row[2], row[3], row[4], row[5]
+                                symbol, row[0], row[1], row[2], row[3], row[4], row[5], row[6]
                             ))
 
                 if records_to_upsert:
