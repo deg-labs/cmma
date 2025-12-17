@@ -288,6 +288,7 @@ def read_volume(
         schemas.VolumeData(
             symbol=row.symbol,
             total_volume=round(row.total_volume, 4),
+            total_turnover=round(row.total_turnover, 4),
             timeframe=timeframe,
             period=period
         ) for row in results

@@ -38,6 +38,7 @@ class VolumeData(BaseModel):
     """出来高データ本体"""
     symbol: str = Field(..., description="銘柄シンボル")
     total_volume: float = Field(..., description="指定期間の合計出来高")
+    total_turnover: float = Field(..., description="指定期間の合計売買代金")
     timeframe: str = Field(..., description="出来高の計算に用いたタイムフレーム")
     period: str = Field(..., description="出来高の計算に用いた期間 (例: '24h')")
 

@@ -121,7 +121,8 @@ def get_volume_for_period(db: Session, timeframe: str, period_str: str, sort: st
     query = text(f"""
         SELECT
             symbol,
-            SUM(volume) as total_volume
+            SUM(volume) as total_volume,
+            SUM(turnover) as total_turnover
         FROM {table_name}
         WHERE
             timestamp >= :start_ts_ms
