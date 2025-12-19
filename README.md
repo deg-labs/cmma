@@ -210,13 +210,21 @@ $ curl -s "http://localhost:8001/volatility?timeframe=1d&threshold=30&direction=
   - 例: `24h` (過去24時間), `7d` (過去7日間)
 
 - `min_volume` (任意, float, デフォルト: `0`):
-  - 期間内の合計出来高での足切り額（USD）。この値より大きい出来高を持つ銘柄のみが返されます。
-  - 例: `500000000` (5億ドル)
+  - 期間内の合計出来高または合計売買代金での足切り。この値より大きい銘柄のみが返されます。
+  - フィルタ対象は `min_volume_target` で指定します。
+  - 例: `500000000` (5億)
+
+- `min_volume_target` (任意, string, デフォルト: `turnover`):
+  - `min_volume` のフィルタ対象を指定します。
+  - `volume`: 出来高 (`total_volume`) でフィルタします。
+  - `turnover`: 売買代金 (`total_turnover`) でフィルタします。
 
 - `sort` (任意, string, デフォルト: `volume_desc`):
   - 結果のソート順を指定します。
   - `volume_desc`: 期間内合計出来高の降順
   - `volume_asc`: 期間内合計出来高の昇順
+  - `turnover_desc`: 期間内合計売買代金の降順
+  - `turnover_asc`: 期間内合計売買代金の昇順
   - `symbol_asc`: シンボル名の昇順
 
 - `limit` (任意, integer, デフォルト: `100`):
@@ -224,10 +232,10 @@ $ curl -s "http://localhost:8001/volatility?timeframe=1d&threshold=30&direction=
 
 #### 使用例 (curl)
 
-1時間足 (`1h`) のデータを用いて、過去24時間 (`24h`) の出来高が5億ドル以上の銘柄を、出来高が多い順に取得する場合:
+1時間足 (`1h`) のデータを用いて、過去24時間 (`24h`) の**売買代金**が5億ドル以上の銘柄を、**売買代金**が多い順に取得する場合:
 
 ```shell
-$ curl -s "http://localhost:8001/volume?timeframe=1h&period=24h&min_volume=500000000&sort=volume_desc"
+$ curl -s "http://localhost:8001/volume?timeframe=1h&period=24h&min_volume=500000000&min_volume_target=turnover&sort=turnover_desc"
 ```
 
 #### 成功レスポンスの例
@@ -238,7 +246,8 @@ $ curl -s "http://localhost:8001/volume?timeframe=1h&period=24h&min_volume=50000
   "data": [
     {
       "symbol": "BTCUSDT",
-      "total_volume": 850000000.5,
+      "total_volume": 15000.1234,
+      "total_turnover": 850000000.5,
       "timeframe": "1h",
       "period": "24h"
     }
@@ -254,6 +263,17 @@ $ curl -s "http://localhost:8001/volume?timeframe=1h&period=24h&min_volume=50000
 例えば、`OHLCV_HISTORY_LIMIT`が`1000`（推奨設定）の場合:
 - `timeframe=1h` であれば、`1000時間`分のデータが利用可能です。
 - `timeframe=1m` の場合、`1000分`（約16.6時間）が上限となり、`period=24h`のようなリクエストはエラーを返します。
+
+**出来高 (volume) と売買代金 (turnover) について**
+
+Bybit APIの仕様に基づき、各値の単位は以下の通りです。
+
+- **`total_volume` (出来高)**:
+  - **USDT無期限契約**: 単位は**基準通貨**（例: BTCUSDTならBTC）
+- **`total_turnover` (売買代金)**:
+  - **USDT無期限契約**: 単位は**見積もり通貨**（例: BTCUSDTならUSDT）
+
+このAPIはUSDT無期限契約のみを対象としているため、`min_volume`でドルベースの足切りを行いたい場合は、`min_volume_target=turnover` を使用するのが一般的です。
 
 ### エラーレスポンス
 

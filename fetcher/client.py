@@ -40,7 +40,7 @@ class BybitClient:
                 response.raise_for_status()
                 data = await response.json()
                 if data.get("retCode") == 0:
-                    result_list = [[int(i[0]), float(i[1]), float(i[2]), float(i[3]), float(i[4]), float(i[5])] for i in data.get("result", {}).get("list", [])]
+                    result_list = [[int(i[0]), float(i[1]), float(i[2]), float(i[3]), float(i[4]), float(i[5]), float(i[6])] for i in data.get("result", {}).get("list", [])]
                     return result_list
                 else:
                     self.logger.warning(f"{symbol} ({interval}) K線取得APIエラー: {data.get('retMsg')}")

@@ -33,6 +33,7 @@ class DatabaseRepository:
                     low REAL NOT NULL,
                     close REAL NOT NULL,
                     volume REAL NOT NULL,
+                    turnover REAL NOT NULL,
                     PRIMARY KEY (symbol, timestamp)
                 )
                 """)
@@ -55,14 +56,15 @@ class DatabaseRepository:
         cursor = self.conn.cursor()
         try:
             upsert_sql = f"""
-            INSERT INTO {table_name} (symbol, timestamp, open, high, low, close, volume)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO {table_name} (symbol, timestamp, open, high, low, close, volume, turnover)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(symbol, timestamp) DO UPDATE SET
                 open=excluded.open,
                 high=excluded.high,
                 low=excluded.low,
                 close=excluded.close,
-                volume=excluded.volume
+                volume=excluded.volume,
+                turnover=excluded.turnover
             """
             cursor.executemany(upsert_sql, records)
             self.conn.commit()
