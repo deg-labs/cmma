@@ -97,6 +97,20 @@ class DatabaseRepository:
             self.logger.error(f"[{timeframe}] DBクリーンアップ中にエラー: {e}")
             self.conn.rollback()
 
+    def get_latest_timestamps(self, timeframe: str) -> dict[str, int]:
+        """指定されたタイムフレームの各シンボルの最新のタイムスタンプを取得する"""
+        table_name = self.get_table_name(timeframe)
+        self.logger.info(f"[{timeframe}] 最新のタイムスタンプを取得中...")
+        cursor = self.conn.cursor()
+        try:
+            query = f"SELECT symbol, MAX(timestamp) FROM {table_name} GROUP BY symbol"
+            cursor.execute(query)
+            return {row[0]: row[1] for row in cursor.fetchall() if row[1] is not None}
+        except sqlite3.Error as e:
+            # テーブルが存在しない場合などは空の辞書を返すか、エラーログを出して続行
+            self.logger.warning(f"[{timeframe}] 最新タイムスタンプ取得中にエラー (初回実行時は無視してください): {e}")
+            return {}
+
     def close(self):
         if self.conn:
             self.conn.close()

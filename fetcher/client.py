@@ -33,8 +33,10 @@ class BybitClient:
         self.logger.info(f"合計 {len(symbols)} の取引可能なLinear銘柄を発見")
         return symbols
 
-    async def get_kline_data(self, session: aiohttp.ClientSession, symbol: str, interval: str, limit: int = 5) -> Optional[List[List[Any]]]:
+    async def get_kline_data(self, session: aiohttp.ClientSession, symbol: str, interval: str, limit: int = 200, start: Optional[int] = None) -> Optional[List[List[Any]]]:
         params = {"category": "linear", "symbol": symbol, "interval": interval, "limit": limit}
+        if start:
+            params["start"] = start
         try:
             async with session.get(f"{self.base_url}/v5/market/kline", params=params) as response:
                 response.raise_for_status()

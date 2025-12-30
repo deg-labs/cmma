@@ -38,11 +38,21 @@ class DataFetchService:
 
                 self.logger.info(f"--- タイムフレーム: {timeframe_str} ({interval}) のデータ取得を開始 ---")
 
+                # 既存データの最新タイムスタンプを取得
+                latest_timestamps = self.repository.get_latest_timestamps(timeframe_str)
+
                 sem = asyncio.Semaphore(self.config.concurrency_limit)
 
                 async def fetch_one(symbol: str):
+                    last_ts = latest_timestamps.get(symbol)
                     async with sem:
-                        return await self.client.get_kline_data(session, symbol, interval, limit=self.config.ohlcv_history_limit)
+                        if last_ts:
+                            # 既存データがある場合は、そのタイムスタンプから最新までを取得 (limitは最大200とする)
+                            # startを指定すると、その時刻を含む足から取得されるため、重複はupsertで解決
+                            return await self.client.get_kline_data(session, symbol, interval, limit=200, start=last_ts)
+                        else:
+                            # 新規の場合は設定された履歴数だけ取得
+                            return await self.client.get_kline_data(session, symbol, interval, limit=self.config.ohlcv_history_limit)
 
                 tasks = [fetch_one(symbol) for symbol in symbols]
                 results = await asyncio.gather(*tasks)
