@@ -85,17 +85,21 @@ def get_symbols_exceeding_threshold(db: Session, timeframe: str, price_threshold
 from datetime import datetime, timedelta
 
 def _parse_period_to_seconds(period_str: str) -> int:
-    """Parses a period string like '24h' or '7d' into seconds."""
-    unit = period_str[-1].lower()
+    """Parses a period string like '24h' or '7d' into seconds. 'M'は月(約30日)として扱う。"""
+    unit = period_str[-1]
     value = int(period_str[:-1])
 
+    if unit == 'M':  # 月 (約30日)
+        return value * 3600 * 24 * 30
+    unit = unit.lower()
     if unit == 'h':
         return value * 3600
     elif unit == 'd':
         return value * 3600 * 24
     elif unit == 'w':
         return value * 3600 * 24 * 7
-    # Add more units if needed (e.g., 'min' for minutes, 's' for seconds)
+    elif unit == 'm':  # 分
+        return value * 60
     raise ValueError(f"Unsupported period unit: {period_str}")
 
 def get_volume_for_period(db: Session, timeframe: str, period_str: str, sort: str, limit: int, min_volume: float = 0, min_volume_target: str = "turnover") -> List[Any]:
