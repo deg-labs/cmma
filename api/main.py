@@ -143,8 +143,11 @@ VALID_PERIODS = ["1h", "6h", "12h", "24h", "1d", "7d", "1w", "1M"] # Add more as
 
 # Helper function to convert timeframe string to minutes
 def _parse_timeframe_to_minutes(timeframe_str: str) -> int:
-    unit = timeframe_str[-1].lower()
+    unit = timeframe_str[-1]
     value = int(timeframe_str[:-1])
+    if unit == 'M': # Assuming 'M' is for month, roughly 30 days
+        return value * 60 * 24 * 30
+    unit = unit.lower()
     if unit == 'm':
         return value
     elif unit == 'h':
@@ -153,23 +156,24 @@ def _parse_timeframe_to_minutes(timeframe_str: str) -> int:
         return value * 60 * 24
     elif unit == 'w':
         return value * 60 * 24 * 7
-    elif unit == 'M': # Assuming 'M' is for month, roughly 30 days
-        return value * 60 * 24 * 30
     raise ValueError(f"Unsupported timeframe unit: {timeframe_str}")
 
 # Helper function to convert period string to minutes (reusing from crud, but needs to be accessible here for validation)
 # This is a bit of duplication, but necessary for validation before CRUD call.
 def _parse_period_to_minutes(period_str: str) -> int:
-    unit = period_str[-1].lower()
+    unit = period_str[-1]
     value = int(period_str[:-1])
 
+    if unit == 'M': # 月 (約30日)
+        return value * 60 * 24 * 30
+    unit = unit.lower()
     if unit == 'h':
         return value * 60
     elif unit == 'd':
         return value * 60 * 24
     elif unit == 'w':
         return value * 60 * 24 * 7
-    elif unit == 'm' and len(period_str) > 1 and period_str[:-1].isdigit(): # Check if it's 'min' not 'month' for period
+    elif unit == 'm': # 分
         return value
     raise ValueError(f"Unsupported period unit: {period_str}")
 
